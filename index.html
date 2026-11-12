@@ -2755,13 +2755,16 @@ Error generating stack: `+u.message+`
 <script>
 (function () {
   // Paste the SAME Firebase web config into index.html and login.html.
-  const FIREBASE_CONFIGURED = false;
+  const FIREBASE_CONFIGURED = true;
   const FIREBASE_CONFIG = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    appId: "YOUR_FIREBASE_APP_ID"
-  };
+  apiKey: "AIzaSyBJ0oeQC5yQ-xEHDDpwXsGOM0KyCmd0xpk",
+  authDomain: "shortrells-22139.firebaseapp.com",
+  projectId: "shortrells-22139",
+  storageBucket: "shortrells-22139.firebasestorage.app",
+  messagingSenderId: "614316660720",
+  appId: "1:614316660720:web:2ec1dc03e382c40aaa2f35",
+  measurementId: "G-QH8E4LZ15K"
+};
 
   window.__shortRellsUser = null;
   window.__shortRellsAuthReady = false;
@@ -2780,6 +2783,16 @@ Error generating stack: `+u.message+`
   } else {
     window.__shortRellsAuthReady = true;
   }
+
+  // Lightweight account shortcut; it does not replace the site's existing navigation.
+  function addAccountShortcut(){
+    if(document.getElementById("sr-account-shortcut")) return;
+    const b=document.createElement("a"); b.id="sr-account-shortcut"; b.href="login.html"; b.textContent="Sign In / Register";
+    b.style.cssText="position:fixed;top:14px;right:16px;z-index:9000;padding:10px 16px;border-radius:999px;background:#e50914;color:#fff;font:700 13px system-ui;text-decoration:none;box-shadow:0 4px 20px #0006";
+    document.body.appendChild(b);
+    if(window.firebase && firebase.apps.length){firebase.auth().onAuthStateChanged(user=>{b.textContent=user?(user.displayName||user.email||"Account"):"Sign In / Register";b.href=user?"#":"login.html";b.onclick=user?(e=>{e.preventDefault();if(confirm("Sign out of SHORT Rells?"))firebase.auth().signOut()}):null;});}
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",addAccountShortcut); else addAccountShortcut();
 
   const style = document.createElement("style");
   style.textContent = `
