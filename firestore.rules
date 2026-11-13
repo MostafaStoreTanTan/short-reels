@@ -2,16 +2,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && (request.auth.token.admin == true || request.auth.token.superAdmin == true); }
+    function isAdmin() {
+      return signedIn() &&
+        (request.auth.token.admin == true || request.auth.token.superAdmin == true);
+    }
+
+    match /{collection}/{document} {
+      allow read: if collection in [
+        'short_rells_series', 'short_rells_categories',
+        'short_rells_settings', 'short_rells_lang'
+      ] || (collection.matches('short_rells_.*') && isAdmin());
+      allow write: if collection.matches('short_rells_.*') && isAdmin();
+    }
+
+    match /{collection}/{document} {
+      allow read: if collection.matches('novaflix_.*') &&
+        signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if collection.matches('novaflix_.*') &&
+        signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if collection.matches('novaflix_.*') &&
+        signedIn() && resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if collection.matches('novaflix_.*') &&
+        signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create: if signedIn() && request.auth.uid == uid;
-      allow update: if signedIn() && request.auth.uid == uid && !('role' in request.resource.data) && !('admin' in request.resource.data);
+      allow update: if signedIn() && request.auth.uid == uid &&
+        !('role' in request.resource.data) && !('admin' in request.resource.data);
       allow delete: if isAdmin();
     }
-    match /content/{document=**} { allow read: if true; allow write: if isAdmin(); }
-    match /ratings/{document=**} { allow read: if true; allow create: if signedIn() && request.resource.data.userId == request.auth.uid; allow update, delete: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); }
-    match /comments/{document=**} { allow read: if true; allow create: if signedIn() && request.resource.data.userId == request.auth.uid; allow update, delete: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); }
-    match /{document=**} { allow read, write: if false; }
+    match /content/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /ratings/{document=**} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() ||
+        (signedIn() && resource.data.userId == request.auth.uid);
+    }
+    match /comments/{document=**} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() ||
+        (signedIn() && resource.data.userId == request.auth.uid);
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
